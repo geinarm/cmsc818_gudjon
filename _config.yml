@@ -1,0 +1,22 @@
+title: "CMSC818: Task And Motion Planning"
+url: "https://geinarm.com"
+baseurl: "/"
+
+markdown: kramdown
+#ins_logo: "./bits-logo.png"
+
+tracking_id: #
+
+footer: no
+footer_url: "https://github.com/geinarm"
+footer_text: "Design by Ankit Sultana"
+
+sass:
+    style: compressed
+    sass_dir: _sass
+
+nav:
+ - name: "About"
+   link: "/about"
+ - name: "Contact"
+   link: "contact"
