@@ -12,7 +12,7 @@ An example of this is when a robot needs move one object out of the way to reach
 
 ## Motivation
 
-In resent years there has been a surge in robotic capabilities. Falling price of sensors and increased computing power makes it cheaper and easier than ever to build advanced robots. The field of task planning, motion planning, sensing and control have become very mature. It seems that the limiting factor to building advanced robots is the interaction between these fields. The ability for robots to reliably perform a long sequence of actions in pursuit of a high level goal is still a big challenge.
+In resent years there has been a surge in robotic capabilities. Falling price of sensors and increased computing power makes it cheaper and easier than ever to build advanced robots. Methods for task planning, motion planning, sensing and control have become very mature and the software is easily available. It seems that the limiting factor to building advanced robots is the interaction between these methods. The ability for robots to reliably perform a long sequence of actions in pursuit of a high level goal is still a big challenge.
 
 The problem is in part that state of the art task planners and motion planners have no good way to work together.
 Task planners are very good at finding a long, complicated sequence of actions to reach a high level goal.
@@ -23,7 +23,7 @@ Motion planners are very good at finding collision free paths between two poses 
 
 The straight forward approach is to have a task planner plan a sequence of actions and then use a motion planner to execute each action. This does not enable the task planner to make any considerations for the geometric constraints. 
 
-One common approach to extend this is to use the motion planner as a subroutine of the task planner. For every action that is considered the motion planner is queried to check if it is geometrically feasible. This get expensive since it requires a large number of queries to the motion planner. Some resent work has been focused on reducing number and cost of repeated queries motion planner queries.
+One common approach to extend this is to use the motion planner as a subroutine of the task planner. For every action that is considered, the motion planner is queried to check if it is geometrically feasible. This gets expensive since it requires a large number of queries to the motion planner. Some resent work has been focused on reducing number and cost of repeated queries motion planner queries.
 
 Other approaches have attempted to combine TAMP into a single search space. Likely the most cited planner is aSyMov.
 
@@ -37,11 +37,11 @@ The table below shows a comparison of a few TAMP methods.
 
 ## Statement of work
 
-For this work I intend to use a simple simulated environment for pick-and-place tasks with a robotic arm. For simplicity I use a 2D environment. This picture shows what is might look like.
+For this work I intend to use a simple simulated environment for pick-and-place tasks with a robotic arm. For simplicity I intend to use a 2D environment. This picture shows what it might look like.
 
 ![Simulation environment concept](assets/BoxWorld1.png)
 
-The arm will need to solve tasks such as "Move *b1* to *g1*". *b1* is a box that can be manipulated, and *g1* is a goal area. To do this the arm will have to move *b2* and *b3* out of the way. The focus of this project is to choose a position for the boxes such that they don't interfere later in the plan, or do so as little as possible. This gets hard as we add more boxes and obstacles.
+The arm will need to solve tasks such as "Move *b1* to *g1*". *b1* is a box that can be manipulated, and *g1* is a goal area. To do this the arm will have to move *b2* and *b3* out of the way. The focus of this project is to find a way to choose the position for the boxes such that they don't interfere later in the plan, or do so as little as possible. This gets hard as we add more boxes and obstacles.
 
 The idea is to use symbolic placeholders for the positions and not commit to a specific value until as late as possible, when we can estimate the sweep volume of the arm for the rest of the plan.
 
