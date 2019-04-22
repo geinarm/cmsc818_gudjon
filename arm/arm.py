@@ -4,6 +4,10 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
+import shapely
+import shapely.geometry
+#from shapely.geometry import Polygon, MultiPolygon
+
 from frame2d import Frame2D
 
 ## Polygon
@@ -77,13 +81,32 @@ class Arm(object):
         for i in range(len(thetas)):
             self.links[i].set_rotation(thetas[i])
 
+    def get_end_point(self):
+        return self.end_frame.origin()
+
+    def get_colliders(self):
+        polygons = []
+        for l in self.links:
+            polygons.append(shapely.geometry.Polygon(l.get_points()))
+        #link = self.links[len(self.links)-1]
+        #return shapely.geometry.Polygon(link.get_points())
+
+        return polygons #shapely.geometry.MultiPolygon(polygons)
+
+    def collides(self, collider):
+        link_colliders = self.get_colliders()
+        for l in link_colliders:
+            if l.intersects(collider):
+                return True
+
+        return False
+
     ## Plot the arm given the segment lengths and joint angles
-    def plot_arm(self, ax, c='black'):
+    def draw(self, ax, c='black'):
         
         end = self.end_frame.origin()
         points = [l.frame.origin()[0,:] for l in self.links]
         points = np.stack(points, axis=0)
-        print(points)
         ax.scatter(points[:, 0], points[:, 1], s=50, c=c, zorder=10)
         ax.scatter(end[0,0], end[0,1], s=100, marker='x')
 
