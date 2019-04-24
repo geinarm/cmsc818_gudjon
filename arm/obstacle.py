@@ -20,8 +20,8 @@ class Box(object):
 
         return shapely.geometry.Polygon(self.get_points())
 
-    def draw(self, ax):
+    def draw(self, ax, color='red'):
         poly = Polygon(self.get_points(), True)
-        p = PatchCollection([poly], alpha=0.4)
+        p = PatchCollection([poly], alpha=1.0, facecolors=color)
         #p.set_array(np.array(colors))
         ax.add_collection(p)

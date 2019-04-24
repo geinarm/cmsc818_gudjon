@@ -35,10 +35,10 @@ class Workspace(object):
             self.arm.draw(ax)
 
         for o in self.obstacles:
-            o.draw(ax)
+            o.draw(ax, color='#FF5555')
 
         for b in self.boxes:
-            b.draw(ax)
+            b.draw(ax, color='blue')
 
         if ax is None:
             plt.show()

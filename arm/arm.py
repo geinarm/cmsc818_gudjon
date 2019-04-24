@@ -6,6 +6,7 @@ from matplotlib.collections import PatchCollection
 
 import shapely
 import shapely.geometry
+from shapely.ops import cascaded_union
 #from shapely.geometry import Polygon, MultiPolygon
 
 from frame2d import Frame2D
@@ -91,7 +92,8 @@ class Arm(object):
         #link = self.links[len(self.links)-1]
         #return shapely.geometry.Polygon(link.get_points())
 
-        return polygons #shapely.geometry.MultiPolygon(polygons)
+        return polygons
+        #return [cascaded_union(polygons)]
 
     def collides(self, collider):
         link_colliders = self.get_colliders()

@@ -58,7 +58,8 @@ class Frame2D(object):
         #new_H = Frame2D._create_h(theta, self._x, self._y)
         #return Frame2D(H=new_H, parent=self.parent)
         self._theta = theta
-        self._H = self._create_h(self._theta, self._x, self._y)
+        #self._H = self._create_h(self._theta, self._x, self._y)
+        self._update_h(theta, self._x, self._y)
         return self
 
     def translate(self, x, y):
@@ -73,6 +74,14 @@ class Frame2D(object):
 
     def origin(self):
         return self.transform_points(np.array([0,0]))
+
+    def _update_h(self, theta, x, y):
+        self._H[0,0] = np.cos(theta)
+        self._H[0,1] = -np.sin(theta)
+        self._H[0,2] = x
+        self._H[1,0] = np.sin(theta)
+        self._H[1,1] = np.cos(theta)
+        self._H[1,2] = y
 
     @staticmethod
     def identity():
