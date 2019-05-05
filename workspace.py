@@ -1,13 +1,20 @@
 import matplotlib.pyplot as plt
+from arm.obstacle import Box
+from frame2d import Frame2D
 
 class Workspace(object):
+
+    WIDTH = 10
+    HEIGHT = 10
+
     def __init__(self):
         self.boxes = []
         self.obstacles = []
         self.arm = None
 
-    def add_box(self, box):
-        self.boxes.append(box)
+    def add_box(self, x, y):
+        b = Box(Frame2D(0, x, y), 0.4, 0.4)
+        self.boxes.append(b)
 
     def add_obstacle(self, obstacle):
         self.obstacles.append(obstacle)
@@ -20,8 +27,18 @@ class Workspace(object):
             for o in self.obstacles:
                 if self.arm.collides(o.get_collider()):
                     return True
+            for o in self.boxes:
+                if self.arm.collides(o.get_collider()):
+                    return True
 
         return False
+
+    def box_at(self, x, y):
+        for o in self.boxes:
+            if o.point_collides(x, y):
+                return o
+
+        return None
 
     def draw(self, ax=None, t=0):
         if ax is None:

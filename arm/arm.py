@@ -16,10 +16,10 @@ claw_shape = np.array([
     [ 0.3,   0.5 ],
     [ 0.3,   0.4 ],
     [ 0.9,   0.4 ],
-    [ 0.9,   0.25],
-    [ 0.3,   0.25],
-    [ 0.3,  -0.25],
-    [ 0.9,  -0.25],
+    [ 0.9,   0.3],
+    [ 0.3,   0.3],
+    [ 0.3,  -0.3],
+    [ 0.9,  -0.3],
     [ 0.9,  -0.4 ],
     [ 0.3,  -0.4 ],
     [ 0.3,  -0.5 ],
@@ -60,6 +60,8 @@ class Arm(object):
         self.a3 = 0.6
         self.base_frame = Frame2D(0, 0, 0.5)
         self.links = []
+        self.link_lengths = link_lengths
+        self.ax_artists = []
 
         num_links = len(link_lengths)
         for i in range(num_links+1):
@@ -76,14 +78,25 @@ class Arm(object):
             self.links.append(Link(shape, frame))
         
         self.end_frame = Frame2D(0,0.6,0, parent=self.links[len(self.links)-1].frame)
+        self.link_lengths.append(0.6)
+        self.pose = [0]*len(self.links)
 
     def set_pose(self, thetas):
         assert(len(thetas) == len(self.links))
         for i in range(len(thetas)):
             self.links[i].set_rotation(thetas[i])
+        self.pose = thetas
+
+    def get_pose(self):
+        return self.pose
 
     def get_end_point(self):
         return self.end_frame.origin()
+
+    def get_end_pose(self):
+        pos = self.end_frame.origin()[0]
+        theta = self.end_frame.theta()
+        return np.array([pos[0], pos[1], theta])
 
     def get_colliders(self):
         polygons = []
@@ -104,13 +117,20 @@ class Arm(object):
         return False
 
     ## Plot the arm given the segment lengths and joint angles
-    def draw(self, ax, c='black'):
-        
+    def draw(self, ax, c='black', clear=True):
+        if clear:
+            for a in self.ax_artists:
+                a.remove()
+            self.ax_artists = []
+
         end = self.end_frame.origin()
         points = [l.frame.origin()[0,:] for l in self.links]
         points = np.stack(points, axis=0)
-        ax.scatter(points[:, 0], points[:, 1], s=50, c=c, zorder=10)
-        ax.scatter(end[0,0], end[0,1], s=100, marker='x')
+        
+        a = ax.scatter(points[:, 0], points[:, 1], s=50, c=c, zorder=10)
+        self.ax_artists.append(a)
+        a = ax.scatter(end[0,0], end[0,1], s=100, marker='x')
+        self.ax_artists.append(a)
 
         polygons = []
         for link in self.links:
@@ -120,5 +140,5 @@ class Arm(object):
         colors = 100*np.random.rand(len(polygons))
         p = PatchCollection(polygons, alpha=0.4)
         p.set_array(np.array(colors))
-        ax.add_collection(p)
+        self.ax_artists.append(ax.add_collection(p))
 

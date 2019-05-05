@@ -75,6 +75,18 @@ class Frame2D(object):
     def origin(self):
         return self.transform_points(np.array([0,0]))
 
+    def theta(self):
+        if self.parent is None:
+            return self._theta
+        else:
+            t = self._theta + self.parent.theta()
+            if t > np.pi:
+                return t - (2*np.pi)
+            elif t < -np.pi:
+                return t + (2*np.pi)
+            else:
+                return t
+
     def _update_h(self, theta, x, y):
         self._H[0,0] = np.cos(theta)
         self._H[0,1] = -np.sin(theta)
