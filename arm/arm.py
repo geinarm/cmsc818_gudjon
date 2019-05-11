@@ -61,6 +61,7 @@ class Arm(object):
         self.base_frame = Frame2D(0, 0, 0.5)
         self.links = []
         self.link_lengths = link_lengths
+        self.holding = None
         self.ax_artists = []
 
         num_links = len(link_lengths)
@@ -90,11 +91,29 @@ class Arm(object):
     def get_pose(self):
         return self.pose
 
+    def grab(self, box):
+        box.obstacle.frame.set_position(0,0)
+        box.obstacle.frame.set_rotation(0)
+        box.obstacle.frame.parent = self.end_frame
+        self.holding = box
+
+    def drop(self):
+        if self.holding is not None:
+            box = self.holding
+            pose = self.get_end_pose()
+            box.frame.set_position(pose[0], pose[1])
+            box.frame.set_rotation(pose[2])
+            box.frame.parent = None
+            self.holding = None
+
+            return box
+        return None
+
     def get_end_point(self):
         return self.end_frame.origin()
 
     def get_end_pose(self):
-        pos = self.end_frame.origin()[0]
+        pos = self.end_frame.origin()
         theta = self.end_frame.theta()
         return np.array([pos[0], pos[1], theta])
 
@@ -102,11 +121,8 @@ class Arm(object):
         polygons = []
         for l in self.links:
             polygons.append(shapely.geometry.Polygon(l.get_points()))
-        #link = self.links[len(self.links)-1]
-        #return shapely.geometry.Polygon(link.get_points())
 
         return polygons
-        #return [cascaded_union(polygons)]
 
     def collides(self, collider):
         link_colliders = self.get_colliders()
@@ -124,12 +140,12 @@ class Arm(object):
             self.ax_artists = []
 
         end = self.end_frame.origin()
-        points = [l.frame.origin()[0,:] for l in self.links]
+        points = [l.frame.origin() for l in self.links]
         points = np.stack(points, axis=0)
         
         a = ax.scatter(points[:, 0], points[:, 1], s=50, c=c, zorder=10)
         self.ax_artists.append(a)
-        a = ax.scatter(end[0,0], end[0,1], s=100, marker='x')
+        a = ax.scatter(end[0], end[1], s=100, marker='x')
         self.ax_artists.append(a)
 
         polygons = []
@@ -141,4 +157,7 @@ class Arm(object):
         p = PatchCollection(polygons, alpha=0.4)
         p.set_array(np.array(colors))
         self.ax_artists.append(ax.add_collection(p))
+
+        if self.holding is not None:
+            self.holding.draw(ax, clear=clear)
 

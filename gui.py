@@ -3,7 +3,7 @@ import threading
 import numpy as np
 import matplotlib.pyplot as plt
 
-from RRT_arm import RRT
+from rrt.RRT_effector import RRT
 
 class GUI(object):
 
@@ -21,6 +21,7 @@ class GUI(object):
         self.rrt.set_node_added_callback(self.on_node_added)
         self.rrt.set_node_tested_callback(self.on_node_tested)
         self.path = None
+        self.target_box = None
         
         self.fig.canvas.mpl_connect('button_press_event', self.on_mouse_down)
         self.fig.canvas.mpl_connect('button_release_event', self.on_mouse_up)
@@ -63,10 +64,9 @@ class GUI(object):
 
     def _run_rrt(self):
         pose_start = self.workspace.arm.get_pose()
-        path = self.rrt.find_path(pose_start, self.goal, max_samples=2000)
+        path = self.rrt.find_path(pose_start, self.goals, max_samples=2000)
         if path is None:
-            print("Failed")
-            self._state = GUI.STATE_SEARCH_FAILED
+            self.on_search_failed()
             return
 
         self.path = np.array(path)
@@ -78,9 +78,7 @@ class GUI(object):
 
         if event.button == 1: # Left Click
             if self._state == GUI.STATE_IDLE:
-                #if self.workspace.is_free(point):
-                #    pass
-                self.select_start = point
+                self.mouse_start = point
 
             elif self._state == GUI.STATE_MOVING:
                 pass
@@ -90,24 +88,44 @@ class GUI(object):
                 self.clear_tree()
 
     def on_mouse_up(self, event):
-        point = np.array([event.xdata, event.ydata])
+        mouse_end = np.array([event.xdata, event.ydata])
         if event.button == 1: # Left Click
             if self._state == GUI.STATE_IDLE:
-                self.select_end = point
-                box_selected = self.workspace.box_at(point[0], point[1])
-                if box_selected is None:
-                    xs = [self.select_start[0], self.select_end[0]]
-                    ys = [self.select_start[1], self.select_end[1]]
-                    self.ax.plot(xs, ys)
-                    v = self.select_end - self.select_start
-                    
-                    goal_x = self.select_start[0]
-                    goal_y = self.select_start[1]
+                box_selected = self.workspace.box_at(mouse_end[0], mouse_end[1])
+                if box_selected is not None:
+                    self.goals = []
+                    grasp_poses = box_selected.get_grasp_poses()
+                    for pose in grasp_poses:
+                        self.goals.append(np.array(pose))
+
+                    self.target_box = box_selected
+                    self.start_rrt()
+                else:
+                    ## Oriented goal pose
+                    v = mouse_end - self.mouse_start
+                    goal_x = self.mouse_start[0]
+                    goal_y = self.mouse_start[1]
                     goal_theta = np.arctan2(v[1], v[0])
-                    self.goal = np.array([goal_x, goal_y, goal_theta])
-                    print("goal:", self.goal)
+                    self.goals = [np.array([goal_x, goal_y, goal_theta])]
 
                     self.start_rrt()
+
+    def on_target_reached(self):
+        print("Target Reached")
+        self.path = None
+        self._state = GUI.STATE_IDLE
+        self.clear_tree()
+
+        if self.target_box is not None:
+            self.workspace.arm_grab(self.target_box)
+            self.target_box = None
+        else:
+            self.workspace.arm_drop()
+
+    def on_search_failed(self):
+        print("Failed")
+        self._state = GUI.STATE_SEARCH_FAILED
+        self.target_box = None
 
     def on_close(self, event):
         if self._state == GUI.STATE_SEARCHING:
@@ -127,9 +145,7 @@ class GUI(object):
 
                 self.path_index += 1
                 if self.path_index >= len(self.path):
-                    self.path = None
-                    self._state = GUI.STATE_IDLE
-                    self.clear_tree()
+                    self.on_target_reached()
 
             if self._state == GUI.STATE_SEARCH_FAILED:
                 self.clear_tree()

@@ -41,30 +41,33 @@ class Frame2D(object):
 
         return p_temp[:, 0:2]
 
+    @DeprecationWarning
     def transform(self, frame):
         h_new = np.matmul(self._H, frame._H)
         return Frame2D(H=h_new)
 
+    @DeprecationWarning
     def transform_inv(self, frame):
         h_new = np.matmul(self._H_inv, frame._H)
         return Frame2D(H=h_new)
 
     def rotate(self, theta):
-        h_temp = Frame2D._create_h(theta, 0,0)
-        new_H = np.matmul(h_temp, self._H)
-        return Frame2D(H=new_H)
-
-    def set_rotation(self, theta):
-        #new_H = Frame2D._create_h(theta, self._x, self._y)
-        #return Frame2D(H=new_H, parent=self.parent)
-        self._theta = theta
-        #self._H = self._create_h(self._theta, self._x, self._y)
-        self._update_h(theta, self._x, self._y)
+        new_theta = self._theta + theta
+        self._update_h(new_theta, self._x, self._y)
         return self
 
     def translate(self, x, y):
-        new_H = Frame2D._create_h(self._theta, self._x+x, self._y+y)
-        return Frame2D(H=new_H)
+        new_x = self._x+x, 
+        new_y = self._y+y
+        self._update_h(self._theta, new_x, new_y)
+        return self
+
+    def set_rotation(self, theta):
+        self._update_h(theta, self._x, self._y)
+        return self
+
+    def set_position(self, x, y):
+        self._update_h(self._theta, x, y)
 
     def _parent_H(self):
         if self.parent is None:
@@ -73,7 +76,8 @@ class Frame2D(object):
             return np.matmul(self.parent._parent_H(), self._H)
 
     def origin(self):
-        return self.transform_points(np.array([0,0]))
+        p = self.transform_points(np.array([0,0]))
+        return p[0]
 
     def theta(self):
         if self.parent is None:
@@ -88,6 +92,10 @@ class Frame2D(object):
                 return t
 
     def _update_h(self, theta, x, y):
+        self._x = x
+        self._y = y
+        self._theta = theta
+
         self._H[0,0] = np.cos(theta)
         self._H[0,1] = -np.sin(theta)
         self._H[0,2] = x
