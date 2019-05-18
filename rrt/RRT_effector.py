@@ -109,7 +109,7 @@ class RRT:
 		point = self.limits[:,0] + (rand * drange)
 		return point
 
-	def find_path(self, q_start, p_goals, max_nodes=1000, max_samples=10000):
+	def find_path(self, q_start, goal, max_nodes=1000, max_samples=10000):
 		self.nodes = []
 		self._interrupt = False
 		self.ws.arm.set_pose(q_start)
@@ -126,8 +126,10 @@ class RRT:
 			## Generate a sample and extend the tree
 			if np.random.rand() < 0.15:
 				## Sample goal direction
-				rand_goal_idx = np.random.choice(len(p_goals))
-				p_goal = p_goals[rand_goal_idx]
+				#rand_goal_idx = np.random.choice(len(p_goals))
+				# p_goals[rand_goal_idx]
+				p_goal = goal.sample(self.ws.arm)
+				#q = goal.sample(self.ws.arm)
 				
 				n_close = self.closest_node_p(p_goal)
 				v = (p_goal - n_close.end_point)
@@ -162,12 +164,12 @@ class RRT:
 			self.add_node(n_new)
 
 			##Check goal
-			for p_goal in p_goals:
-				if self.inGoalRegion(n_new, p_goal):
-					print('Success')
-					print('%d samples, %d missed, goal sampled %d times' % (samples, num_miss, ng))
-					self.solution = n_new
-					return n_new.getPlan()
+			#for p_goal in p_goals:
+			if goal.at_goal(self.ws.arm): #self.inGoalRegion(n_new, p_goal):
+				print('Success')
+				print('%d samples, %d missed, goal sampled %d times' % (samples, num_miss, ng))
+				self.solution = n_new
+				return n_new.getPlan()
 
 			if self._interrupt:
 				print('Interrupted')

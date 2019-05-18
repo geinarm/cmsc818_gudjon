@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from rrt.RRT_effector import RRT
+from arm.goal import GoalEndPose, GoalArea
 
 class GUI(object):
 
@@ -12,8 +13,9 @@ class GUI(object):
     STATE_MOVING = 'STATE_MOVING'
     STATE_SEARCH_FAILED = 'STATE_SEARCH_FAILED'
 
-    def __init__(self, workspace, rrt):
+    def __init__(self, controller, workspace, rrt):
         self.workspace = workspace
+        self.controller = controller
         self.fig, self.ax = plt.subplots()
         self._open = False
         self._state = GUI.STATE_IDLE
@@ -26,6 +28,9 @@ class GUI(object):
         self.fig.canvas.mpl_connect('button_press_event', self.on_mouse_down)
         self.fig.canvas.mpl_connect('button_release_event', self.on_mouse_up)
         self.fig.canvas.mpl_connect('close_event', self.on_close)
+        #motion_notify_event  ## Mouse Moved
+        #key_press_event
+
         self.ax_artists = []
 
         self.reset()
@@ -64,7 +69,7 @@ class GUI(object):
 
     def _run_rrt(self):
         pose_start = self.workspace.arm.get_pose()
-        path = self.rrt.find_path(pose_start, self.goals, max_samples=2000)
+        path = self.rrt.find_path(pose_start, self.goal, max_samples=2000)
         if path is None:
             self.on_search_failed()
             return
@@ -92,22 +97,24 @@ class GUI(object):
         if event.button == 1: # Left Click
             if self._state == GUI.STATE_IDLE:
                 box_selected = self.workspace.box_at(mouse_end[0], mouse_end[1])
+                area_selected = self.workspace.area_at(mouse_end[0], mouse_end[1])
                 if box_selected is not None:
-                    self.goals = []
-                    grasp_poses = box_selected.get_grasp_poses()
-                    for pose in grasp_poses:
-                        self.goals.append(np.array(pose))
-
+                    self.goal = box_selected.get_grasp_goal()
                     self.target_box = box_selected
+                    self.start_rrt()
+                elif area_selected is not None:
+                    self.goal = GoalArea(area_selected.get_bounding_box(), -0.2)
                     self.start_rrt()
                 else:
                     ## Oriented goal pose
                     v = mouse_end - self.mouse_start
                     goal_x = self.mouse_start[0]
                     goal_y = self.mouse_start[1]
-                    goal_theta = np.arctan2(v[1], v[0])
-                    self.goals = [np.array([goal_x, goal_y, goal_theta])]
-
+                    if np.linalg.norm(v) < 0.1:
+                        self.goal = GoalArea(np.array([goal_x-0.1, goal_x+0.1, goal_y-0.1, goal_y+0.1]))
+                    else:
+                        goal_theta = np.arctan2(v[1], v[0])
+                        self.goal = GoalEndPose(np.array([goal_x, goal_y, goal_theta]), delta=0.1)
                     self.start_rrt()
 
     def on_target_reached(self):
@@ -132,6 +139,9 @@ class GUI(object):
             self.rrt.interrupt()
 
         self._open = False
+
+    def update(self):
+        pass
 
     def open(self):
         self.workspace.draw(self.ax)
