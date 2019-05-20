@@ -8,9 +8,12 @@ class Box(object):
 
     BOX_SIZE = 0.4
 
-    def __init__(self, x, y, theta=0):
+    def __init__(self, x, y, theta=0, name="box"):
         self.obstacle = Obstacle(Frame2D(theta, x, y), Box.BOX_SIZE, Box.BOX_SIZE)
         self.frame = self.obstacle.frame
+        
+        ## Names are used to map between workspace and planning domain
+        self.name = name
 
     @DeprecationWarning
     def get_grasp_poses(self):
@@ -52,13 +55,14 @@ class Box(object):
             self.ax.scatter(pose[0], pose[1])
 
 class Area(object):
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, name):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.obstacle = Obstacle(Frame2D(0, x, y), width, height)
         self.frame = self.obstacle.frame
+        self.name = name
 
     def get_collider(self):
         return self.obstacle.get_collider()
@@ -86,15 +90,27 @@ class Workspace(object):
         self.arm = None
         self.arm_holding = None
 
-    def add_box(self, x, y, theta=0):
-        b = Box(x, y, theta)
+    def add_box(self, x, y, theta=0, name=None):
+        if name is None:
+            name = "box{0}".format(len(self.boxes))
+
+        b = Box(x, y, theta, name)
         self.boxes.append(b)
 
     def add_obstacle(self, obstacle):
         self.obstacles.append(obstacle)
 
-    def add_area(self, area):
+    def add_area(self, area, name=None):
+        if name is None:
+            name = "area{0}".format(len(self.areas))
+
         self.areas.append(area)
+
+    def create_area(self, x, y, width, height):
+        name = "area{0}".format(len(self.areas))
+        area = Area(x, y, width, height, name)
+        self.areas.append(area)
+        return area
 
     def add_arm(self, arm):
         self.arm = arm

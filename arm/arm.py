@@ -54,13 +54,14 @@ class Link(object):
 
 class Arm(object):
 
-    def __init__(self, link_lengths):
+    def __init__(self, link_lengths, joint_limits):
         self.a1 = 3
         self.a2 = 2
         self.a3 = 0.6
         self.base_frame = Frame2D(0, 0, 0.5)
         self.links = []
         self.link_lengths = link_lengths
+        self.joint_limits = joint_limits
         self.holding = None
         self.ax_artists = []
 

@@ -23,11 +23,11 @@ class Node:
 
 class RRT:
 
-	def __init__(self, ws, eps, goalR, limits):
+	def __init__(self, ws, eps, goalR):
 		self.ws = ws
 		self.epsilon = eps
 		self.goalRadius = goalR
-		self.limits = limits
+		self.limits = ws.arm.joint_limits
 		self.J = Jacobian(ws.arm)
 
 		self.on_node_added_callback = None
@@ -124,12 +124,13 @@ class RRT:
 		num_miss = 0
 		while len(self.nodes) < max_nodes and samples < max_samples:
 			## Generate a sample and extend the tree
-			if np.random.rand() < 0.15:
+			if np.random.rand() < 0.05:
 				## Sample goal direction
 				#rand_goal_idx = np.random.choice(len(p_goals))
 				# p_goals[rand_goal_idx]
 				p_goal = goal.sample(self.ws.arm)
 				#q = goal.sample(self.ws.arm)
+				ng += 1
 				
 				n_close = self.closest_node_p(p_goal)
 				v = (p_goal - n_close.end_point)
